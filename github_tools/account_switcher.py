@@ -6,6 +6,7 @@ from click import echo
 from click import group
 from click import option
 from click import pass_context
+from click import pass_obj
 
 from github_tools.internal.registry import Registry
 
@@ -36,9 +37,19 @@ def check_ssh_config() -> None:
 
 
 @cli.command(name="list", short_help="list accounts")
-def list_accounts() -> None:
+@pass_obj
+def list_accounts(app: Application) -> None:
     """Print list of all registered accounts."""
-    echo("list of github accounts")
+    if not app.registry.accounts:
+        echo("no accounts")
+        return
+
+    echo("Github Accounts:")
+    for account in app.registry.accounts:
+        echo(f"{account.name}:")
+        echo(f"    cert:   '{account.cert_file}'")
+        echo(f"    author: {account.author!r}")
+        echo(f"    email:  {account.email!r}")
 
 
 @cli.command(name="add", short_help="add account")
