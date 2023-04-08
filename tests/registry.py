@@ -3,19 +3,13 @@ from unittest import main
 from unittest import TestCase
 
 from github_tools.internal.account import Account
+from github_tools.internal.registry import ErrorCode
 from github_tools.internal.registry import Registry
+from github_tools.internal.registry import RegistryError
 
 
 def load_fake_db() -> StringIO:
-    return StringIO(
-        r"""
-[Jack]
-cert_file = C:\Users\Admin\.ssh\ajax.systems
-
-[Joe]
-cert_file = C:\Users\Admin\.ssh\git
-"""
-    )
+    return StringIO("[Jack]\n" "cert_file = /fake/cert-file\n" "[Joe]\n" "cert_file=other/fake-file\n")
 
 
 class RegistryTestCase(TestCase):
@@ -23,11 +17,31 @@ class RegistryTestCase(TestCase):
         registry = Registry()
         self.assertEqual(0, len(registry))
 
-    def test_load(self) -> None:
+    def test_load_basic(self) -> None:
+        registry = Registry.load(StringIO())
+        self.assertEqual(0, len(registry))
+
         registry = Registry.load(load_fake_db())
         self.assertEqual(2, len(registry))
         self.assertTrue("Jack" in registry)
         self.assertTrue("Joe" in registry)
+
+    def test_load_corrupted(self) -> None:
+        with self.assertRaises(RegistryError) as call_context:
+            Registry.load(StringIO("[Joe"))
+        self.assertEqual(ErrorCode.FileCorrupted, call_context.exception.code)
+
+        with self.assertRaises(RegistryError) as call_context:
+            Registry.load(StringIO("[Joe]\n[Joe]\n"))
+        self.assertEqual(ErrorCode.DuplicateAccount, call_context.exception.code)
+
+        with self.assertRaises(RegistryError) as call_context:
+            Registry.load(StringIO("[Joe]"))
+        self.assertEqual(ErrorCode.FieldMissed, call_context.exception.code)
+
+        with self.assertRaises(RegistryError) as call_context:
+            Registry.load(StringIO("[Joe]\ncert_file="))
+        self.assertEqual(ErrorCode.FieldValueMissed, call_context.exception.code)
 
     def test_modify_operations(self) -> None:
         registry = Registry()
