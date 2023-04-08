@@ -8,6 +8,7 @@ from click import option
 from click import pass_context
 from click import pass_obj
 
+from github_tools.internal.account import Account
 from github_tools.internal.registry import Registry
 
 
@@ -57,23 +58,37 @@ def list_accounts(app: Application) -> None:
 @argument("cert-path", type=Path)
 @option("--author", type=str)
 @option("--email", type=str)
-def add_account(name: str, cert_path: Path, author: str, email: str) -> None:
+@pass_obj
+def add_account(app: Application, name: str, cert_path: Path, author: str, email: str) -> None:
     """Add/update account to registry."""
-    echo(f"add github account - {name}")
-    echo(f"\tcert: {str(cert_path)}")
+    try:
+        app.registry.add(Account.create(name, cert_path, author, email), rewrite=True)
+        with open(app.config, "w", encoding="utf-8") as file:
+            app.registry.save(file)
 
-    if author:
-        echo(f"\tauthor: {author}")
-
-    if email:
-        echo(f"\temail: {email}")
+        action = "updated" if name in app.registry else "added"
+        echo(f"operation succeeded: account was {action}")
+    except OSError as error:
+        echo(f"operation failed: {error.strerror}")
 
 
 @cli.command(name="remove", short_help="remove account")
 @argument("name", type=str)
-def remove_account(name: str) -> None:
+@pass_obj
+def remove_account(app: Application, name: str) -> None:
     """Remove account from registry."""
-    echo(f"remove github account - {name}")
+    if name not in app.registry:
+        echo("no registered account")
+        return
+
+    try:
+        app.registry.remove(name)
+        with open(app.config, "w", encoding="utf-8") as file:
+            app.registry.save(file)
+
+        echo("operation succeeded: account was removed")
+    except OSError as error:
+        echo(f"operation failed: {error.strerror}")
 
 
 @cli.command(name="switch", short_help="switch account")
