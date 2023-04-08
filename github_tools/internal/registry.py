@@ -59,11 +59,12 @@ class Registry:
             self._dump_account(account, storage)
         storage.write(io)
 
-    def get(self, account: str) -> Account | None:
-        return self._accounts.get(account)
+    def get(self, name: str) -> Account | None:
+        """Get an account by name otherwise return None."""
+        return self._accounts.get(name)
 
     def add(self, account: Account, rewrite: bool = False) -> bool:
-        """Add the account to the registry or replace the existing one if a *rewrite* is set to **True**."""
+        """Add the name to the registry or replace the existing one if a *rewrite* is set to **True**."""
         if account.name in self._accounts and not rewrite:
             return False
 
@@ -71,7 +72,7 @@ class Registry:
         return True
 
     def remove(self, account: str | Account) -> bool:
-        """Remove the account from the registry if present."""
+        """Remove the name from the registry if present."""
         name = self._get_name(account)
         if name not in self._accounts:
             return False
@@ -80,9 +81,11 @@ class Registry:
         return True
 
     def __len__(self) -> int:
+        """Get amount of registered accounts."""
         return len(self._accounts)
 
     def __contains__(self, account: str | Account) -> bool:
+        """Check for account is registered or not."""
         name = self._get_name(account)
         return name in self._accounts
 
@@ -110,11 +113,11 @@ class Registry:
     def _read_account(account_name: str, storage: Storage) -> Account:
         fields = storage[account_name]
         if "cert_file" not in fields:
-            raise RegistryError(ErrorCode.FieldMissed, f"Field (cert_file) is missed for account ({account_name})")
+            raise RegistryError(ErrorCode.FieldMissed, f"Field (cert_file) is missed for name ({account_name})")
 
         if not fields["cert_file"]:
             raise RegistryError(
-                ErrorCode.FieldValueMissed, f"Field value (cert_file) is missed for account ({account_name})"
+                ErrorCode.FieldValueMissed, f"Field value (cert_file) is missed for name ({account_name})"
             )
 
         return Account.create(account_name, **fields)
