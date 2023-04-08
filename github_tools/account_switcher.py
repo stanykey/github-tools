@@ -1,15 +1,32 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 from click import argument
 from click import echo
 from click import group
 from click import option
+from click import pass_context
+
+from github_tools.internal.registry import Registry
+
+
+@dataclass
+class Application:
+    config: Path
+    registry: Registry
 
 
 @group()
-def cli() -> None:
+@option("--config", type=Path, default=Path.home() / ".github-tools.cfg")
+@pass_context
+def cli(ctx: object, config: Path) -> None:
     """Allows switching between GitHub accounts in shells."""
-    pass
+    registry = Registry()
+    if config.exists():
+        with open(config, encoding="utf-8") as file:
+            registry = Registry.load(file)
+
+    setattr(ctx, "obj", Application(config, registry))
 
 
 @cli.command(name="check-ssh", short_help="check ssh config")
