@@ -1,10 +1,11 @@
-import unittest
 from pathlib import Path
+from unittest import main
+from unittest import TestCase
 
 from github_tools.internal.account import Account
 
 
-class AccountTestCase(unittest.TestCase):
+class AccountTestCase(TestCase):
     def test_create(self) -> None:
         self.assertEqual(
             Account(name="first", cert_file=Path("./fake-cert-path")),
@@ -13,4 +14,4 @@ class AccountTestCase(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()
