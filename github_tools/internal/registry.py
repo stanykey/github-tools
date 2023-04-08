@@ -59,6 +59,9 @@ class Registry:
             self._dump_account(account, storage)
         storage.write(io)
 
+    def get(self, account: str) -> Account | None:
+        return self._accounts.get(account)
+
     def add(self, account: Account, rewrite: bool = False) -> bool:
         """Add the account to the registry or replace the existing one if a *rewrite* is set to **True**."""
         if account.name in self._accounts and not rewrite:

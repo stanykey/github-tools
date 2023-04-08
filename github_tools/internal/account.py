@@ -16,3 +16,12 @@ class Account:
     def create(cls, name: str, cert_file: str | PathLike[str], author: str = "", email: str = "") -> Self:
         """Create an object via default ctor, but ensure that `cert_path` is an instance of pathlib.Path."""
         return cls(name=name, cert_file=Path(cert_file), author=author, email=email)
+
+    def is_valid(self) -> bool:
+        if not self.name:
+            return False
+
+        if not isinstance(self.cert_file, Path):
+            return False
+
+        return self.cert_file.is_file()

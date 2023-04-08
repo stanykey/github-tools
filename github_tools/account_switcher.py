@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from click import argument
+from click import confirm
 from click import echo
 from click import group
 from click import option
@@ -76,7 +77,12 @@ def list_accounts(app: Application) -> None:
 def add_account(app: Application, name: str, cert_path: Path, author: str, email: str) -> None:
     """Add/update account to registry."""
     try:
-        app.registry.add(Account.create(name, cert_path, author, email), rewrite=True)
+        account = Account.create(name, cert_path, author, email)
+        if not account.is_valid():
+            if not confirm("account is invalid. add anyway?"):
+                return
+
+        app.registry.add(account, rewrite=True)
         with open(app.config, "w", encoding="utf-8") as file:
             app.registry.save(file)
 
@@ -110,6 +116,28 @@ def remove_account(app: Application, name: str) -> None:
 def switch_to_account(name: str) -> None:
     """Switch to account if exists."""
     echo(f"switch to account - {name}")
+
+
+@cli.command(name="check", short_help="check account")
+@argument("name", type=str)
+@option("--remove", type=bool, is_flag=True, default=False)
+@pass_obj
+def validate_account(app: Application, name: str, remove: bool) -> None:
+    """Validate accounts and delete invalid if *remove* is set to **True**."""
+    account = app.registry.get(name)
+    if not account:
+        echo("no registered account")
+        return
+
+    if account.is_valid():
+        echo(f"account ({name}) is valid")
+        return
+
+    echo(f"account ({name}) is invalid")
+    if remove and confirm("confirm delete", prompt_suffix="? "):
+        app.registry.remove(account)
+        with open(app.config, "w", encoding="utf-8") as file:
+            app.registry.save(file)
 
 
 if __name__ == "__main__":

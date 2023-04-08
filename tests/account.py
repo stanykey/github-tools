@@ -12,6 +12,15 @@ class AccountTestCase(TestCase):
             Account.create(name="first", cert_file="./fake-cert-path"),
         )
 
+    def test_integrity(self) -> None:
+        self.assertFalse(Account.create("", "").is_valid())
+        self.assertFalse(Account.create("test", "").is_valid())
+
+        self.assertTrue(Account(name="test", cert_file=Path(__file__)).is_valid())
+        self.assertTrue(Account.create("test", __file__).is_valid())
+
+        self.assertFalse(Account.create("test", "/fake/test/path").is_valid())
+
 
 if __name__ == "__main__":
     main()
