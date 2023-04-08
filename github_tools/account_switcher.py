@@ -10,6 +10,7 @@ from click import pass_obj
 
 from github_tools.internal.account import Account
 from github_tools.internal.registry import Registry
+from github_tools.internal.registry import RegistryError
 
 
 @dataclass
@@ -24,11 +25,24 @@ class Application:
 def cli(ctx: object, config: Path) -> None:
     """Allows switching between GitHub accounts in shells."""
     registry = Registry()
-    if config.exists():
+    skip_loading = getattr(ctx, "invoked_subcommand") == "prune"
+    if not skip_loading and config.exists():
         with open(config, encoding="utf-8") as file:
-            registry = Registry.load(file)
+            try:
+                registry = Registry.load(file)
+            except RegistryError as error:
+                echo(f"can't load accounts: {error.message}")
+                exit(error.code)
 
     setattr(ctx, "obj", Application(config, registry))
+
+
+@cli.command(short_help="drop accounts")
+@pass_obj
+def prune(app: Application) -> None:
+    """Simply delete config file."""
+    app.config.unlink(missing_ok=True)
+    echo("all accounts were dropped")
 
 
 @cli.command(name="check-ssh", short_help="check ssh config")
