@@ -21,10 +21,15 @@ class Application:
 
 
 @group()
-@option("--config", type=Path, default=Path.home() / ".github-tools.cfg")
+@option("--config", type=Path, default=Path.home() / ".github-tools.cfg", show_default=True)
 @pass_context
 def cli(ctx: object, config: Path) -> None:
-    """Allows switching between GitHub accounts in shells."""
+    """
+    Allows switching between GitHub accounts in shells.
+
+    It's done pretty simply: the application creates or updates a section for **Host github.com** by pointing
+    **IdentityFile** to the symbolic link which can be switched to another certificate file with the **switch** command
+    """
     registry = Registry()
     skip_loading = getattr(ctx, "invoked_subcommand") == "prune"
     if not skip_loading and config.exists():
