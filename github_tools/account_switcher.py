@@ -12,6 +12,7 @@ from click import pass_obj
 from github_tools.internal.account import Account
 from github_tools.internal.registry import Registry
 from github_tools.internal.registry import RegistryError
+from github_tools.internal.ssh_config import SshConfig
 
 
 @dataclass
@@ -53,8 +54,19 @@ def prune(app: Application) -> None:
 
 @cli.command(name="check-ssh", short_help="check ssh config")
 def check_ssh_config() -> None:
-    """Check ~/.ssh/config for GitHub host."""
-    echo("check ssh config")
+    """Check ~/.ssh/config for GitHub host entry."""
+    config_path = Path.home() / ".ssh" / "config"
+    if not config_path.is_file():
+        echo("ssh config file (~/.ssh/config) is missing")
+
+    with open(config_path, encoding="utf-8") as file:
+        ssh_config = SshConfig(file)
+
+    status = "valid" if ssh_config.is_valid() else "corrupted"
+    print(f"ssh config is {status}")
+
+    status = "contains" if "github.com" in ssh_config else "doesn't contain"
+    print(f"ssh config {status} 'github.com' entry")
 
 
 @cli.command(name="list", short_help="list accounts")
