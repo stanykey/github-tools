@@ -2,6 +2,11 @@
 
 The package contains a set of small CLIs for different purposes.
 
+Note: yet one educational project with practical purposes. Educational topics/goals:
+- [ssh config](https://linux.die.net/man/5/ssh_config) editing
+- mastering in [click](https://palletsprojects.com/p/click/) package and CLI in the whole
+- python [builtin unit tests framework](https://docs.python.org/3/library/unittest.html)
+
 
 ## List of applications:
 - *[github-account](#github-account)*: allowing to switch between accounts in shell
